@@ -85,7 +85,51 @@ LEFT JOIN pcn.pagamentos pg ON pg.id_venda = v.id_vendas
 WHERE pg.id_pagamento IS NULL
 GROUP BY 1
 ORDER BY 2 DESC;
-		
+
+# Payment time
+SELECT 
+	id_pagamento,
+	STR_TO_DATE(dt_venda, '%d/%m/%Y') as dt_vendas,
+    STR_TO_DATE(dt_pgto, '%d/%m/%Y') as dt_pgto,
+    datediff(str_to_date(dt_pgto, '%d/%m/%Y'),str_to_date(dt_venda, '%d/%m/%Y')) as tempo_pgto
+FROM pcn.vendas v
+INNER JOIN pcn.pagamentos pg ON pg.id_venda = v.id_vendas 
+WHERE dt_venda IS NOT NULL;
+
+# Average Payment Time
+SELECT 
+	ROUND(AVG(DATEDIFF(
+		STR_TO_DATE(dt_pgto, '%d/%m/%Y'), STR_TO_DATE(dt_venda, '%d/%m/%Y'))),2) 
+	AS media_tempo_gasto
+FROM pcn.pagamentos pg
+LEFT JOIN pcn.vendas v ON v.id_vendas = pg.id_venda;
+
+# Average Value Canceled
+SELECT 
+    ROUND(AVG(p.valor),2) AS media_valor_cancelado
+FROM pcn.vendas v
+LEFT JOIN pcn.produtos p ON p.id_produto = v.id_produto
+LEFT JOIN pcn.pagamentos pg ON pg.id_venda = v.id_vendas
+LEFT JOIN pcn.venda_promocao vp ON vp.id_venda = v.id_vendas
+WHERE pg.id_pagamento IS NULL;
+
+# % discount
+SELECT 
+	COUNT(v.id_vendas) as qtd,
+    vp.promocao,
+    CONCAT(ROUND((COUNT(v.id_VENDAS) / (SELECT COUNT(*) FROM pcn.vendas) * 100), 2), '%') as percentage
+FROM pcn.vendas v
+LEFT JOIN pcn.venda_promocao vp ON vp.id_venda = v.id_vendas
+GROUP BY 2;
+
+# % Canceled Discount
+SELECT 
+	COUNT(v.id_vendas) as qtd,
+    vp.promocao,
+    CONCAT(ROUND((COUNT(v.id_VENDAS) / (SELECT COUNT(*) FROM pcn.vendas) * 100), 2), '%') as percentage
+FROM pcn.vendas v
+LEFT JOIN pcn.venda_promocao vp ON vp.id_venda = v.id_vendas
+GROUP BY 2;
 
 
 
